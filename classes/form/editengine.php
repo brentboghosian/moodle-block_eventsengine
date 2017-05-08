@@ -17,6 +17,7 @@ require_once($CFG->dirroot.'/blocks/eventsengine/lib.php');
 class editengine extends \moodleform {
     function definition() {
         $global $DB;
+        $mform =& $this->_form;
         if (!empty($this->_customdata)) {
             $assign = $this->_customdata;
             unset($assign->enginedata);
@@ -61,6 +62,17 @@ class editengine extends \moodleform {
         }
 
         // Form fields.
-        $this->add_action_buttons();
+        $mform->addElement('hidden', 'id');
+        $mform->setType('id', PARAM_INT);
+
+        $mform->addElement('text', 'name', get_string('name', 'block_eventsengine').':');
+        $mform->setType('name', PARAM_TEXT);
+        $mform->addRule('name', get_string('required'), 'required', NULL, 'client');
+        $mform->addRule('name', null, 'maxlength', 255, 'client');
+
+        $mform->addElement('select', 'engine', get_string('engine', 'block_eventsengine'), $choices);
+        $mform->addElement('select', 'action', get_string('action', 'block_eventsengine'), $selections);
+
+        $this->add_action_buttons(); // TDB: ok/save should be 'Next'.
     }
 }

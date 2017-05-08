@@ -23,7 +23,7 @@ class block_eventsengine extends block_base {
      * @return \stdClass The block's populated content property.
      */
     public function get_content() {
-        global $DB, $OUTPUT, $PAGE, $USER;
+        global $CFG, $DB, $OUTPUT, $PAGE, $USER;
 
         // $config = get_config('block_eventsengine');
         $this->content = new stdClass;
@@ -76,8 +76,8 @@ class block_eventsengine extends block_base {
                     ob_end_clean();
                     $table->data[$i][] = "<pre>{$rawdata}</pre>";
                 }
-                $table->data[$i][] = html_writer::empty_tag('img', ['src' => $OUTPUT->pix_url('help'), 'title' => $details]).
-                        ((is_siteadmin() || $USER->id == $item->owner) ?
+                $table->data[$i][] = html_writer::empty_tag('img', ['src' => "{$CFG->wwwroot}/blocks/recognition/pix/details.png",
+                    'title' => $details]).((is_siteadmin() || $USER->id == $item->owner) ?
                         html_writer::link(new moodle_url('/blocks/eventsengine/editengine.php', ['id' => $assign->id, 'returnurl' => $PAGE->url]),
                         new pix_icon('t/edit')).html_writer::link(new moodle_url('/blocks/eventsengine/editengine.php',
                         ['id' => $assign->id, 'delete' => 'delete', 'returnurl' => $PAGE->url]), new pix_icon('t/delete')) : '');

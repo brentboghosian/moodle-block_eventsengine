@@ -13,6 +13,14 @@ $eventsactions = [
     'profile_field_update' => [
         'name' => 'Update User Profile Field',
         'configform' => function(&$mform) {
+                            global $DB;
+                            $fields = $DB->get_recordset('user_info_field', null, '', 'id,name');
+                            $choices = [];
+                            foreach ($fields as $id => $field) {
+                                $chocies[$id] = $field->name;
+                            }
+                            $mform->addElement('select', 'fieldid', get_string('fieldid', 'block_eventsengine'), $choices);
+                            $mform->addElement('text', 'value', get_string('value', 'block_eventsengine'));
                         },
         'getformdata' => function($formdata) {
                              $data = [];
@@ -45,6 +53,13 @@ $eventsactions = [
     'enrol_into_course' => [
         'name' => 'Enrol into Course',
         'configform' => function(&$mform) {
+                            global $DB;
+                            $courses = $DB->get_recordset('course', null, '', 'id,shortname');
+                            $choices = [];
+                            foreach ($courses as $id => $course) {
+                                $chocies[$id] = $course->shortname;
+                            }
+                            $mform->addElement('select', 'courseid', get_string('course', 'block_eventsengine'), $choices);
                         },
         'getformdata' => function($formdata) {
                              $data = [];
@@ -95,6 +110,15 @@ $eventsengine = [
                            }
                        },
             'configform' => function(&$mform) {
+                                global $DB;
+                                $eclasses = $DB->get_recordset('local_elisprogram_cls', null, '', 'id,idnumber');
+                                $choices = [];
+                                foreach ($eclasses as $id => $eclass) {
+                                    $choices[$id] = $eclass->idnumber;
+                                }
+                                $mform->addElement('select', 'classid', get_string('eclass', 'block_eventsengine'), $choices);
+                                $mform->addElement('text', 'mingrade', get_string('mingrade', 'block_eventsengine'));
+                                $mform->addElement('text', 'maxgrade', get_string('maxgrade', 'block_eventsengine'));
                             },
             'getformdata' => function($formdata) {
                                  $data = [];
@@ -144,6 +168,13 @@ $eventsengine = [
                            }
                        },
             'configform' => function(&$mform) {
+                                global $DB;
+                                $prgs = $DB->get_recordset('local_elisprogram_pgm', null, '', 'id,idnumber');
+                                $choices = [];
+                                foreach ($prgs as $id => $prg) {
+                                    $choices[$id] = $prg->idnumber;
+                                }
+                                $mform->addElement('select', 'prgid', get_string('program', 'block_eventsengine'), $choices);
                             },
             'getformdata' => function($formdata) {
                                  $data = [];
