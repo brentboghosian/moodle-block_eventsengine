@@ -15,6 +15,7 @@ $string['available'] = 'Available';
 $string['blockname'] = 'EventsEngine';
 $string['course'] = 'Course';
 $string['eclass'] = 'ELIS Class Instance';
+$string['ecourse'] = 'ELIS Course Description';
 $string['editcancelled'] = 'Edit Engine cancelled.';
 $string['editengine'] = 'Edit Engine';
 $string['editengineform'] = 'Edit Engine Form';
