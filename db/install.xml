@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="blocks/eventsengine/db" VERSION="20170507" COMMENT="XMLDB file for Moodle Block EventsEngine"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="block_eventsengine_events" COMMENT="Registered event engines" NEXT="block_eventsengine_actions">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="plugin"/>
+        <FIELD NAME="plugin" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="e.g. moodle, mod_forum, block_rss_client" PREVIOUS="id" NEXT="event"/>
+        <FIELD NAME="event" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="" PREVIOUS="plugin"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="event_idx" UNIQUE="false" FIELDS="event"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="block_eventsengine_actions" COMMENT="Registered event actions" PREVIOUS="block_eventsengine_events" NEXT="block_eventsengine_assign">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="plugin"/>
+        <FIELD NAME="plugin" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="e.g. moodle, mod_forum, block_rss_client" PREVIOUS="id" NEXT="shortname"/>
+        <FIELD NAME="action" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="" PREVIOUS="plugin"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="plugin_idx" UNIQUE="false" FIELDS="plugin" COMMENT=""/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="block_eventsengine_assign" COMMENT="Events engine instances" PREVIOUS="block_eventsengine_actions">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="event"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="" PREVIOUS="id" NEXT="event"/>
+        <FIELD NAME="event" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="" PREVIOUS="name" NEXT="engine"/>
+        <FIELD NAME="engine" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="" PREVIOUS="event" NEXT="action"/>
+        <FIELD NAME="action" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="" PREVIOUS="engine" NEXT="owner"/>
+        <FIELD NAME="owner" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" COMMENT="The Moodle userid that this instance belongs to." PREVIOUS="action" NEXT="enginedata"/>
+        <FIELD NAME="enginedata" TYPE="text" LENGTH="medium" NOTNULL="false" SEQUENCE="false" COMMENT="The engine data serialized PHP array or object." PREVIOUS="owner" NEXT="actiondata"/>
+        <FIELD NAME="actiondata" TYPE="text" LENGTH="medium" NOTNULL="false" SEQUENCE="false" COMMENT="The action data serialized PHP array or object." PREVIOUS="enginedata" NEXT="timecreated"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="actiondata" NEXT="timemodified"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="timecreated"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="name_idx" UNIQUE="false" FIELDS="name" COMMENT=""/>
+        <INDEX NAME="event_idx" UNIQUE="false" FIELDS="event" COMMENT=""/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>
