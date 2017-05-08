@@ -28,6 +28,8 @@ class editengine extends \moodleform {
         // Form fields.
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
+        $mform->addElement('hidden', 'event');
+        $mform->setType('event', PARAM_TEXT);
 
         $mform->addElement('header', 'title', get_string('editengineform', 'block_eventsengine'));
 
@@ -41,14 +43,14 @@ class editengine extends \moodleform {
         }
 
         // Get engine setting and add sub-form.
-        $mform->addElement('header', 'enginedata', get_string('enginedata', 'block_eventsengine'));
         $selectedengine = block_eventsengine_get_engine_def($assign->engine, $assign->event);
-        $selectedengine['configform']($mform);
+        $group = $selectedengine['configform']($mform);
+        $mform->addGroup($group, 'enginedata', get_string('enginedata', 'block_eventsengine'), ' ', false);
 
         // Get action setting and add sub-form.
-        $mform->addElement('header', 'actiondata', get_string('actiondata', 'block_eventsengine'));
         $selectedaction = block_eventsengine_get_action_def($assign->action);
-        $selectedaction['configform']($mform);
+        $group = $selectedaction['configform']($mform);
+        $mform->addGroup($group, 'actiondata', get_string('actiondata', 'block_eventsengine'), ' ', false);
 
         $this->add_action_buttons();
     }

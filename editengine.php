@@ -53,22 +53,22 @@ if (!empty($id) && !$DB->record_exists('block_eventsengine_assign', ['id' => $id
         $assign->event = $data->event;
         $assign->engine = $data->engine;
         $assign->action = $data->action;
-        assign->timemodified = time();
+        $assign->timemodified = time();
         $engine = block_eventsengine_get_engine_def($data->engine, $data->event);
-        $assign->enginedata = $engine['getformdata']($data);
+        $assign->enginedata = $engine['getformdata']((object)$data->enginedata);
         if (!empty($assign->enginedata)) {
             $assign->enginedata = @serialize($assign->enginedata);
-        }
+        } // TBD: else error.
         $action = block_eventsengine_get_action_def($data->action);;
-        $assign->actiondata = $action['getformdata']($data);
+        $assign->actiondata = $action['getformdata']((object)$data->actiondata);
         if (!empty($assign->actiondata)) {
             $assign->actiondata = @serialize($assign->actiondata);
-        }
+        } // TBD: else error.
         if ($id) {
             $DB->update_record('block_eventsengine_assign', $assign);
         } else {
             $assign->owner = $USER->id;
-            assign->timecreated = time();
+            $assign->timecreated = time();
             $DB->insert_record('block_eventsengine_assign', $assign);
         }
         redirect($returnurl, get_string('enginesaved', 'block_eventsengine'), 15);

@@ -19,8 +19,10 @@ $eventsactions = [
                             foreach ($fields as $id => $field) {
                                 $chocies[$id] = $field->name;
                             }
-                            $mform->addElement('select', 'fieldid', get_string('fieldid', 'block_eventsengine'), $choices);
-                            $mform->addElement('text', 'value', get_string('value', 'block_eventsengine'));
+                            $group = [];
+                            $group[] =& $mform->createElement('select', 'fieldid', get_string('fieldid', 'block_eventsengine'), $choices);
+                            $group[] =& $mform->createElement('text', 'value', get_string('value', 'block_eventsengine'));
+                            return $group;
                         },
         'getformdata' => function($formdata) {
                              $data = [];
@@ -59,7 +61,9 @@ $eventsactions = [
                             foreach ($courses as $id => $course) {
                                 $chocies[$id] = $course->shortname;
                             }
-                            $mform->addElement('select', 'courseid', get_string('course', 'block_eventsengine'), $choices);
+                            $group = [];
+                            $group[] =& $mform->createElement('select', 'courseid', get_string('course', 'block_eventsengine'), $choices);
+                            return $group;
                         },
         'getformdata' => function($formdata) {
                              $data = [];
@@ -116,9 +120,11 @@ $eventsengine = [
                                 foreach ($eclasses as $id => $eclass) {
                                     $choices[$id] = $eclass->idnumber;
                                 }
-                                $mform->addElement('select', 'classid', get_string('eclass', 'block_eventsengine'), $choices);
-                                $mform->addElement('text', 'mingrade', get_string('mingrade', 'block_eventsengine'));
-                                $mform->addElement('text', 'maxgrade', get_string('maxgrade', 'block_eventsengine'));
+                                $group = [];
+                                $group[] =& $mform->createElement('select', 'classid', get_string('eclass', 'block_eventsengine'), $choices);
+                                $group[] =& $mform->createElement('text', 'mingrade', get_string('mingrade', 'block_eventsengine'));
+                                $group[] =& $mform->createElement('text', 'maxgrade', get_string('maxgrade', 'block_eventsengine'));
+                                return $group;
                             },
             'getformdata' => function($formdata) {
                                  $data = [];
@@ -174,7 +180,9 @@ $eventsengine = [
                                 foreach ($prgs as $id => $prg) {
                                     $choices[$id] = $prg->idnumber;
                                 }
-                                $mform->addElement('select', 'prgid', get_string('program', 'block_eventsengine'), $choices);
+                                $group = [];
+                                $group[] =& $mform->createElement('select', 'prgid', get_string('program', 'block_eventsengine'), $choices);
+                                return group;
                             },
             'getformdata' => function($formdata) {
                                  $data = [];
