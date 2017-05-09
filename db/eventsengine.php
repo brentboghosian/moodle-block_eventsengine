@@ -21,6 +21,7 @@ $eventsactions = [
                             }
                             $group = [];
                             $group[] =& $mform->createElement('select', 'fieldid', get_string('fieldid', 'block_eventsengine'), $choices);
+                            // TBD: add element of field control type: text, advcheckbox, select, datetime;
                             $group[] =& $mform->createElement('text', 'value', get_string('value', 'block_eventsengine'));
                             return $group;
                         },
@@ -84,176 +85,235 @@ $eventsactions = [
 
 // Array of core eventsengine:
 $eventsengine = [
-        ['\local_elisprogram\event\crlm_class_completed' => ['class_complete_grade_range' => [
-            'name' => 'ELIS Class Instance completed with grade',
-            'display' = function($enginedata) {
-                            global $PAGE;
-                            $pgcontext = $PAGE->context;
-                            return ($pgcontext == context_system::instance ||
-                                    $pgcontext == \local_elisprogram\context\pmclass($enginedata->classid));
+    '\core\event\course_completed' => ['moodle_course_complete_grade_range' => [
+        'name' => 'Moodle Course completed with grade',
+        'display' => function($enginedata) {
+                         global $PAGE;
+                         $pgcontext = $PAGE->context;
+                         return ($pgcontext == context_system::instance ||
+                                 $pgcontext == context_course::($enginedata->courseid));
+                     },
+        'ready' => function($event, $enginedata) {
+                       global $DB;
+                       $courseid = $event->courseid;
+                       $userid = $event->relateduserid;
+                       $finalgrade = $DB->get_field_sql('SELECT gg.finalgrade
+                                                           FROM {grade_grades} gg
+                                                     INNER JOIN {grade_items} gi ON gi.id = gg.itemid
+                                                                AND gi.itemtype = "course"
+                                                          WHERE gg.userid = ?
+                                                                AND gi.courseid = ?', [$userid, $courseid]);
+                       if ($userid && $courseid == $enginedata->courseid &&
+                               block_eventsengine_float_comp($finalgrade, $enginedata->mingrade, '>=') &&
+                               block_eventsengine_float_comp($finalgrade, $enginedata->maxgrade, '<=')) {
+                           return $userid; // return Moodle user id.
+                       } else {
+                           return false;
+                       }
+                   },
+        'configform' => function(&$mform) {
+                            global $DB;
+                            $mcourses = $DB->get_recordset('course', null, '', 'id,shortname');
+                            $choices = [];
+                            foreach ($mcourses as $id => $mcourse) {
+                                $choices[$id] = $mcourse->shortname;
+                            }
+                            $group = [];
+                            $group[] =& $mform->createElement('select', 'courseid', get_string('mcourse', 'block_eventsengine'), $choices);
+                            $group[] =& $mform->createElement('text', 'mingrade', get_string('mingrade', 'block_eventsengine'));
+                            $group[] =& $mform->createElement('text', 'maxgrade', get_string('maxgrade', 'block_eventsengine'));
+                            return $group;
                         },
-            'available' => function() {
-                               $localplugins = core_plugin_manager::instance()->get_plugins_of_type('local');
-                               return (!empty($localplugins['elisprogram']) && $localplugins['elisprogram']->is_installed_and_upgraded());
-                           },
-            'ready' => function($event, $enginedata) {
-                           global $CFG;
-                           require_once($cfg->dirroot.'/local/elisprogram/lib/data/student.class.php');
-                           if (!isset($event->other)) {
-                               return;
-                           }
-                           $student = (object)$event->other;
-                           if ($student->classid == $enginedata->classid && $student->completestatusid > 0 &&
-                                   block_eventsengine_float_comp($student->grade, $enginedata->mingrade, '>=') &&
-                                   block_eventsengine_float_comp($student->grade, $enginedata->maxgrade, '<=')) {
-                               $euser = new user($student->userid);
-                               $muser = $user->get_moodleuser();
-                               return !empty($muser->id) ? $muser->id : false; // return Moodle user id.
-                           } else {
-                               return false;
-                           }
+        'getformdata' => function($formdata) {
+                             $data = [];
+                             if (isset($formdata->courseid)) {
+                                 data['courseid'] = $formdata->courseid;
+                             } else {
+                                 return false;
+                             }
+                             if (isset($formdata->mingrade)) {
+                                 data['mingrade'] = $formdata->mingrade;
+                             } else {
+                                 return false;
+                             }
+                             if (isset($formdata->maxgrade)) {
+                                 data['maxgrade'] = $formdata->maxgrade;
+                             } else {
+                                 return false;
+                             }
+                             return $data;
+                         }
+    ]],
+    '\local_elisprogram\event\crlm_class_completed' => ['class_complete_grade_range' => [
+        'name' => 'ELIS Class Instance completed with grade',
+        'display' => function($enginedata) {
+                         global $PAGE;
+                         $pgcontext = $PAGE->context;
+                         return ($pgcontext == context_system::instance ||
+                                 $pgcontext == \local_elisprogram\context\pmclass($enginedata->classid));
+                     },
+        'available' => function() {
+                           $localplugins = core_plugin_manager::instance()->get_plugins_of_type('local');
+                           return (!empty($localplugins['elisprogram']) && $localplugins['elisprogram']->is_installed_and_upgraded());
                        },
-            'configform' => function(&$mform) {
-                                global $DB;
-                                $eclasses = $DB->get_recordset('local_elisprogram_cls', null, '', 'id,idnumber');
-                                $choices = [];
-                                foreach ($eclasses as $id => $eclass) {
-                                    $choices[$id] = $eclass->idnumber;
-                                }
-                                $group = [];
-                                $group[] =& $mform->createElement('select', 'classid', get_string('eclass', 'block_eventsengine'), $choices);
-                                $group[] =& $mform->createElement('text', 'mingrade', get_string('mingrade', 'block_eventsengine'));
-                                $group[] =& $mform->createElement('text', 'maxgrade', get_string('maxgrade', 'block_eventsengine'));
-                                return $group;
-                            },
-            'getformdata' => function($formdata) {
-                                 $data = [];
-                                 if (isset($formdata->classid)) {
-                                     data['classid'] = $formdata->classid;
-                                 } else {
-                                     return false;
-                                 }
-                                 if (isset($formdata->mingrade)) {
-                                     data['mingrade'] = $formdata->mingrade;
-                                 } else {
-                                     return false;
-                                 }
-                                 if (isset($formdata->maxgrade)) {
-                                     data['maxgrade'] = $formdata->maxgrade;
-                                 } else {
-                                     return false;
-                                 }
-                                 return $data;
-                             },
-        ], 'course_complete_grade_range' => [
-            'name' => 'ELIS Course completed with grade',
-            'display' = function($enginedata) {
-                            global $PAGE;
-                            $pgcontext = $PAGE->context;
-                            return ($pgcontext == context_system::instance ||
-                                    $pgcontext == \local_elisprogram\context\course($enginedata->courseid));
+        'ready' => function($event, $enginedata) {
+                       global $CFG;
+                       require_once($CFG->dirroot.'/local/elisprogram/lib/data/student.class.php');
+                       if (!isset($event->other)) {
+                           return;
+                       }
+                       $student = (object)$event->other;
+                       if ($student->classid == $enginedata->classid && $student->completestatusid > 0 &&
+                               block_eventsengine_float_comp($student->grade, $enginedata->mingrade, '>=') &&
+                               block_eventsengine_float_comp($student->grade, $enginedata->maxgrade, '<=')) {
+                           $euser = new user($student->userid);
+                           $muser = $user->get_moodleuser();
+                           return !empty($muser->id) ? $muser->id : false; // return Moodle user id.
+                       } else {
+                           return false;
+                       }
+                   },
+        'configform' => function(&$mform) {
+                            global $DB;
+                            $eclasses = $DB->get_recordset('local_elisprogram_cls', null, '', 'id,idnumber');
+                            $choices = [];
+                            foreach ($eclasses as $id => $eclass) {
+                                $choices[$id] = $eclass->idnumber;
+                            }
+                            $group = [];
+                            $group[] =& $mform->createElement('select', 'classid', get_string('eclass', 'block_eventsengine'), $choices);
+                            $group[] =& $mform->createElement('text', 'mingrade', get_string('mingrade', 'block_eventsengine'));
+                            $group[] =& $mform->createElement('text', 'maxgrade', get_string('maxgrade', 'block_eventsengine'));
+                            return $group;
                         },
-            'available' => function() {
-                               $localplugins = core_plugin_manager::instance()->get_plugins_of_type('local');
-                               return (!empty($localplugins['elisprogram']) && $localplugins['elisprogram']->is_installed_and_upgraded());
-                           },
-            'ready' => function($event, $enginedata) {
-                           global $CFG;
-                           require_once($cfg->dirroot.'/local/elisprogram/lib/data/student.class.php');
-                           if (!isset($event->other)) {
-                               return;
-                           }
-                           $student = (object)$event->other;
-                           $pmclass = new pmclass($student->classid);
-                           if (!empty($pmclass) && $pmclass->courseid == $enginedata->courseid && $student->completestatusid > 0 &&
-                                   block_eventsengine_float_comp($student->grade, $enginedata->mingrade, '>=') &&
-                                   block_eventsengine_float_comp($student->grade, $enginedata->maxgrade, '<=')) {
-                               $euser = new user($student->userid);
-                               $muser = $user->get_moodleuser();
-                               return !empty($muser->id) ? $muser->id : false; // return Moodle user id.
-                           } else {
-                               return false;
-                           }
+        'getformdata' => function($formdata) {
+                             $data = [];
+                             if (isset($formdata->classid)) {
+                                 data['classid'] = $formdata->classid;
+                             } else {
+                                 return false;
+                             }
+                             if (isset($formdata->mingrade)) {
+                                 data['mingrade'] = $formdata->mingrade;
+                             } else {
+                                 return false;
+                             }
+                             if (isset($formdata->maxgrade)) {
+                                 data['maxgrade'] = $formdata->maxgrade;
+                             } else {
+                                 return false;
+                             }
+                             return $data;
+                         }
+    ], 'course_complete_grade_range' => [
+        'name' => 'ELIS Course completed with grade',
+        'display' => function($enginedata) {
+                         global $PAGE;
+                         $pgcontext = $PAGE->context;
+                         return ($pgcontext == context_system::instance ||
+                                 $pgcontext == \local_elisprogram\context\course($enginedata->courseid));
+                     },
+        'available' => function() {
+                           $localplugins = core_plugin_manager::instance()->get_plugins_of_type('local');
+                           return (!empty($localplugins['elisprogram']) && $localplugins['elisprogram']->is_installed_and_upgraded());
                        },
-            'configform' => function(&$mform) {
-                                global $DB;
-                                $ecourses = $DB->get_recordset('local_elisprogram_crs', null, '', 'id,idnumber');
-                                $choices = [];
-                                foreach ($ecourses as $id => $ecourse) {
-                                    $choices[$id] = $ecourse->idnumber;
-                                }
-                                $group = [];
-                                $group[] =& $mform->createElement('select', 'courseid', get_string('ecourse', 'block_eventsengine'), $choices);
-                                $group[] =& $mform->createElement('text', 'mingrade', get_string('mingrade', 'block_eventsengine'));
-                                $group[] =& $mform->createElement('text', 'maxgrade', get_string('maxgrade', 'block_eventsengine'));
-                                return $group;
-                            },
-            'getformdata' => function($formdata) {
-                                 $data = [];
-                                 if (isset($formdata->courseid)) {
-                                     data['courseid'] = $formdata->courseid;
-                                 } else {
-                                     return false;
-                                 }
-                                 if (isset($formdata->mingrade)) {
-                                     data['mingrade'] = $formdata->mingrade;
-                                 } else {
-                                     return false;
-                                 }
-                                 if (isset($formdata->maxgrade)) {
-                                     data['maxgrade'] = $formdata->maxgrade;
-                                 } else {
-                                     return false;
-                                 }
-                                 return $data;
-                             },
-        ]],
-        ['\local_elisprogram\event\curriculum_completed' => ['program_complete' => [
-            // ELIS Program does not yet trigger this event.
-            'name' => 'ELIS Program completed',
-            'display' = function($enginedata) {
-                            global $PAGE;
-                            $pgcontext = $PAGE->context;
-                            return ($pgcontext == context_system::instance ||
-                                    $pgcontext == \local_elisprogram\context\program($enginedata->prgid));
+        'ready' => function($event, $enginedata) {
+                       global $CFG;
+                       require_once($CFG->dirroot.'/local/elisprogram/lib/data/student.class.php');
+                       if (!isset($event->other)) {
+                           return;
+                       }
+                       $student = (object)$event->other;
+                       $pmclass = new pmclass($student->classid);
+                       if (!empty($pmclass) && $pmclass->courseid == $enginedata->courseid && $student->completestatusid > 0 &&
+                               block_eventsengine_float_comp($student->grade, $enginedata->mingrade, '>=') &&
+                               block_eventsengine_float_comp($student->grade, $enginedata->maxgrade, '<=')) {
+                           $euser = new user($student->userid);
+                           $muser = $user->get_moodleuser();
+                           return !empty($muser->id) ? $muser->id : false; // return Moodle user id.
+                       } else {
+                           return false;
+                       }
+                   },
+        'configform' => function(&$mform) {
+                            global $DB;
+                            $ecourses = $DB->get_recordset('local_elisprogram_crs', null, '', 'id,idnumber');
+                            $choices = [];
+                            foreach ($ecourses as $id => $ecourse) {
+                                $choices[$id] = $ecourse->idnumber;
+                            }
+                            $group = [];
+                            $group[] =& $mform->createElement('select', 'courseid', get_string('ecourse', 'block_eventsengine'), $choices);
+                            $group[] =& $mform->createElement('text', 'mingrade', get_string('mingrade', 'block_eventsengine'));
+                            $group[] =& $mform->createElement('text', 'maxgrade', get_string('maxgrade', 'block_eventsengine'));
+                            return $group;
                         },
-            'available' => function() {
-                               $localplugins = core_plugin_manager::instance()->get_plugins_of_type('local');
-                               return (!empty($localplugins['elisprogram']) && $localplugins['elisprogram']->is_installed_and_upgraded());
-                           },
-            'ready' => function($event, $enginedata) {
-                           global $CFG;
-                           require_once($cfg->dirroot.'/local/elisprogram/lib/data/curriculumstudent.class.php');
-                           if (!isset($event->other)) {
-                               return;
-                           }
-                           $curstu = (object)$event->other;
-                           if ($curstu->curriculumid == $enginedata->prgid && $curstu->completed == 2) {
-                               $euser = new user($curstu->userid);
-                               $muser = $euser->get_moodleuser();
-                               return !empty($muser->id) ? $muser->id : false; // return Moodle user id.
-                           } else {
-                               return false;
-                           }
+        'getformdata' => function($formdata) {
+                             $data = [];
+                             if (isset($formdata->courseid)) {
+                                 data['courseid'] = $formdata->courseid;
+                             } else {
+                                 return false;
+                             }
+                             if (isset($formdata->mingrade)) {
+                                 data['mingrade'] = $formdata->mingrade;
+                             } else {
+                                 return false;
+                             }
+                             if (isset($formdata->maxgrade)) {
+                                 data['maxgrade'] = $formdata->maxgrade;
+                             } else {
+                                 return false;
+                             }
+                             return $data;
+                         }
+    ]],
+    '\local_elisprogram\event\curriculum_completed' => ['program_complete' => [
+        // ELIS Program does not yet trigger this event.
+        'name' => 'ELIS Program completed',
+        'display' => function($enginedata) {
+                         global $PAGE;
+                         $pgcontext = $PAGE->context;
+                         return ($pgcontext == context_system::instance ||
+                                 $pgcontext == \local_elisprogram\context\program($enginedata->prgid));
+                     },
+        'available' => function() {
+                           $localplugins = core_plugin_manager::instance()->get_plugins_of_type('local');
+                           return (!empty($localplugins['elisprogram']) && $localplugins['elisprogram']->is_installed_and_upgraded());
                        },
-            'configform' => function(&$mform) {
-                                global $DB;
-                                $prgs = $DB->get_recordset('local_elisprogram_pgm', null, '', 'id,idnumber');
-                                $choices = [];
-                                foreach ($prgs as $id => $prg) {
-                                    $choices[$id] = $prg->idnumber;
-                                }
-                                $group = [];
-                                $group[] =& $mform->createElement('select', 'prgid', get_string('program', 'block_eventsengine'), $choices);
-                                return group;
-                            },
-            'getformdata' => function($formdata) {
-                                 $data = [];
-                                 if (isset($formdata->prgid)) {
-                                     data['prgid'] = $formdata->prgid;
-                                 } else {
-                                     return false;
-                                 }
-                             },
-       ]],
+        'ready' => function($event, $enginedata) {
+                       global $CFG;
+                       require_once($CFG->dirroot.'/local/elisprogram/lib/data/curriculumstudent.class.php');
+                       if (!isset($event->other)) {
+                           return;
+                       }
+                       $curstu = (object)$event->other;
+                       if ($curstu->curriculumid == $enginedata->prgid && $curstu->completed == 2) {
+                           $euser = new user($curstu->userid);
+                           $muser = $euser->get_moodleuser();
+                           return !empty($muser->id) ? $muser->id : false; // return Moodle user id.
+                       } else {
+                           return false;
+                       }
+                   },
+        'configform' => function(&$mform) {
+                            global $DB;
+                            $prgs = $DB->get_recordset('local_elisprogram_pgm', null, '', 'id,idnumber');
+                            $choices = [];
+                            foreach ($prgs as $id => $prg) {
+                                $choices[$id] = $prg->idnumber;
+                            }
+                            $group = [];
+                            $group[] =& $mform->createElement('select', 'prgid', get_string('program', 'block_eventsengine'), $choices);
+                            return $group;
+                        },
+        'getformdata' => function($formdata) {
+                             $data = [];
+                             if (isset($formdata->prgid)) {
+                                 data['prgid'] = $formdata->prgid;
+                             } else {
+                                 return false;
+                             }
+                         }
+   ]]
 ];

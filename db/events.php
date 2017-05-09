@@ -11,6 +11,11 @@
 // Event observers.
 $observers = [
         [
+            'eventname'   => '\core\event\course_completed',
+            'includefile' => '/blocks/eventsengine/lib.php',
+            'callback'    => 'block_eventsengine_handler',
+            'internal'    => false
+        ],[
             'eventname'   => '\local_elisprogram\event\crlm_class_completed',
             'includefile' => '/blocks/eventsengine/lib.php',
             'callback'    => 'block_eventsengine_handler',
