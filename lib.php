@@ -198,8 +198,8 @@ function block_eventsengine_get_action_def($pluginaction) {
     $actionfile = core_component::get_plugin_directory($plugintypename[0], $plugintypename[1]).'/db/eventsengine.php';
     if (file_exists($actionfile)) {
         require($actionfile);
-        if (!empty($eventsactions[$pluginengs[1]])) {
-            return $eventsactions[$pluginengs[1]];
+        if (!empty($eventsactions[$pluginacts[1]])) {
+            return $eventsactions[$pluginacts[1]];
         }
     }
     return null;
