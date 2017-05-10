@@ -36,21 +36,29 @@ class editengine extends \moodleform {
         // Frozen base engine params to display & pass/save state.
         $fields = ['name', 'engine', 'action'];
         foreach ($fields as $field) {
-            $element =& $mform->createElement('text', $field, $assign->$field);
-            $element->freeze();
+            $element =& $mform->createElement('text', $field, get_string($field, 'block_eventsengine'));
             $mform->addElement($element);
             $mform->setType($field, PARAM_TEXT);
+            $mform->freeze($field); // TBD: this may prevent submitted value, so may also require hidden?
         }
 
         // Get engine setting and add sub-form.
         $selectedengine = block_eventsengine_get_engine_def($assign->engine, $assign->event);
-        $group = $selectedengine['configform']($mform);
-        $mform->addGroup($group, 'enginedata', get_string('enginedata', 'block_eventsengine'), ' ', false);
+        try {
+            $group = $selectedengine['configform']($mform);
+            $mform->addGroup($group, 'enginedata', get_string('enginedata', 'block_eventsengine'), ' ', false);
+        } catch (Exception $e) {
+            error_log("block_eventsengine:form:dataform: Exception in engine {$assign->engine} configform: ".$e->getMessage());
+        }
 
         // Get action setting and add sub-form.
         $selectedaction = block_eventsengine_get_action_def($assign->action);
-        $group = $selectedaction['configform']($mform);
-        $mform->addGroup($group, 'actiondata', get_string('actiondata', 'block_eventsengine'), ' ', false);
+        try {
+            $group = $selectedaction['configform']($mform);
+            $mform->addGroup($group, 'actiondata', get_string('actiondata', 'block_eventsengine'), ' ', false);
+        } catch (Exception $e) {
+            error_log("block_eventsengine:form:dataform: Exception in action {$assign->action} configform: ".$e->getMessage());
+        }
 
         $this->add_action_buttons();
     }

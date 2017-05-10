@@ -28,17 +28,23 @@ class editengine extends \moodleform {
         $events = $DB->get_records('block_eventsengine_events');
         $choices = [];
         forach ($events as $event) {
-            $plugintypename = explode('_', $event->plugin, 2);
-            $eventsenginefile = core_component::get_plugin_directory($plugintypename[0], $plugintypename[1]).
-                    '/db/eventsengine.php';
-            if (file_exists($eventsenginefile)) {
-                require($eventsenginefile);
+            $eventsengine = [];
+            $eventsactions = [];
+            if (block_eventsengine_load_for_plugin($event->plugin, $eventsengine, $eventsactions)) {
                 if (!empty($eventsengine[$event->event])) {
                     foreach ($eventsengine[$event->event] as $shortname => $engine) {
-                        if (!empty($engine['available']) && !$engine['available']()) {
-                            continue;
+                        if (!($available = empty($engine['available']))) {
+                            try {
+                                $available = $engine['available']();
+                            } catch (Exception $e) {
+                                $available = false;
+                                error_log("block_eventsengine:form:editengine: Exception in {$event->plugin}:eventsengine:{$shortname}:available(): ".
+                                        $e->getMessage());
+                           }
                         }
-                        $choices["{$event->event}:{$event->plugin}:{$engine->shortname}"] = "{$event->plugin}:{$engine->name}";
+                        if ($available) {
+                            $choices["{$event->event}:{$event->plugin}:{$engine->shortname}"] = "{$event->plugin}:{$engine->name}";
+                        }
                     }
                 }
             }
@@ -47,16 +53,22 @@ class editengine extends \moodleform {
         $actions = $DB->get_records('block_eventsengine_actions');
         $selections = [];
         forach ($actions as $action) {
-            $plugintypename = explode('_', $action->plugin, 2);
-            $eventsenginefile = core_component::get_plugin_directory($plugintypename[0], $plugintypename[1]).
-                    '/db/eventsengine.php';
-            if (file_exists($eventsenginefile)) {
-                require($eventsenginefile);
+            $eventsengine = [];
+            $eventsactions = [];
+            if (block_eventsengine_load_for_plugin($action->plugin, $eventsengine, $eventsactions)) {
                 foreach ($eventsactions as $shortname => $act) {
-                    if (!empty($act['available']) && !$act['available']()) {
-                        continue;
+                    if (!($available = empty($act['available']))) {
+                        try {
+                            $available = $act['available']();
+                        } catch (Exception $e) {
+                            $available = false;
+                            error_log("block_eventsengine:form:editengine: Exception in {$action->plugin}:eventsactions:{$shortname}:available(): ".
+                                    $e->getMessage());
+                        }
                     }
-                    $selections["{$action->plugin}:{$shortname}"] = "{$action->plugin}:{$act->name}";
+                    if ($available) {
+                        $selections["{$action->plugin}:{$shortname}"] = "{$action->plugin}:{$act->name}";
+                    }
                 }
             }
         }
@@ -73,6 +85,6 @@ class editengine extends \moodleform {
         $mform->addElement('select', 'engine', get_string('engine', 'block_eventsengine'), $choices);
         $mform->addElement('select', 'action', get_string('action', 'block_eventsengine'), $selections);
 
-        $this->add_action_buttons(); // TDB: ok/save should be 'Next'.
+        $this->add_action_buttons(true, get_string('next'));
     }
 }

@@ -8,6 +8,9 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+// File path of plugin's eventsengine definition file.
+define('BLOCK_EVENTSENGINE_FILE', '/db/eventsengine.php');
+
 /**
  * Floating point comparison method that will try to use bcmath lib if present
  *
@@ -120,16 +123,39 @@ function block_eventsengine_float_comp($num1, $num2, $op, $nobcmath = false) {
  * Registers a plugin contains events handlers for a specific type of event.
  *
  * @param string $plugin
+ * @param array &$eventsengine the returned eventsengine array.
+ * @param array &$eventsactions the returned eventsactions array.
+ * @return bool true on success, false on not found or error.
+ */
+function block_eventsengine_load_for_plugin($plugin, &$evtsengine, &$evtsactions) {
+    $plugintypename = explode('_', $plugin, 2);
+    $eventsenginefile = core_component::get_plugin_directory($plugintypename[0], $plugintypename[1]).BLOCK_EVENTSENGINE_FILE;
+    if (file_exists($eventsenginefile)) {
+        try {
+            require($eventsenginefile);
+            $evtsactions = $eventsactions;
+            $evtsengine = $eventsengine;
+            return true;
+        } catch (Exception $e) {
+            error_log("block_eventsengine_load_for_plugin({$plugin}): Exception loading ".BLOCKEVENTS_ENGINE_FILE.' :'.$e->getMessage());
+        }
+    }
+    return false;
+}
+
+/**
+ * Registers a plugin contains events handlers for a specific type of event.
+ *
+ * @param string $plugin
  */
 function block_eventsengine_register($plugin) {
     global $DB;
     delete_records('block_eventsengine_actions', ['plugin' => $plugin]);
     delete_records('block_eventsengine_events', ['plugin' => $plugin]);
-    $plugintypename = explode('_', $plugin, 2);
-    $eventsenginefile = core_component::get_plugin_directory($plugintypename[0], $plugintypename[1]).'/db/eventsengine.php';
-    if (file_exists($eventsenginefile)) {
-        require($eventsenginefile);
-        foreach ($eventsengine as $action => $actiondata) {
+    $eventsengine = [];
+    $eventsactions = [];
+    if (block_eventsengine_load_for_plugin($plugin, $eventsengine, $eventsactions)) {
+        foreach ($eventsactions as $action => $actiondata) {
             $DB->insert_record('block_eventsengine_actions', (object)['plugin' => $plugin, 'action' => $action]);
         }
         foreach ($eventsengine as $event => $engine) {
@@ -142,6 +168,7 @@ function block_eventsengine_register($plugin) {
 
 /**
  * Get engine event.
+ * Inefficient - do not use!
  *
  * @param string $pluginengine Format 'pluginname:enginename' or empty for all.
  * @return string"bool The event name or false if $pluginengine not found
@@ -149,10 +176,9 @@ function block_eventsengine_register($plugin) {
 function block_eventsengine_get_engine_event($pluginengine) {
     // ToDO: add caching.
     $pluginengs = explode(':', $pluginengine, 2);
-    $plugintypename = explode('_', $pluginengs[0], 2);
-    $eventsenginefile = core_component::get_plugin_directory($plugintypename[0], $plugintypename[1]).'/db/eventsengine.php';
-    if (file_exists($eventsenginefile)) {
-        require($eventsenginefile);
+    $eventsengine = [];
+    $eventsactions = [];
+    if (block_eventsengine_load_for_plugin($pluginengs[0], $eventsengine, $eventsactions)) {
         foreach ($eventsengine as $eventname => $engines) {
             foreach ($engines as $enginename => $engine) {
                 if ($enginename == $pluginengine) {
@@ -174,10 +200,9 @@ function block_eventsengine_get_engine_event($pluginengine) {
 function block_eventsengine_get_engine_def($pluginengine, $event) {
     // ToDO: add caching.
     $pluginengs = explode(':', $pluginengine, 2);
-    $plugintypename = explode('_', $pluginengs[0], 2);
-    $eventsenginefile = core_component::get_plugin_directory($plugintypename[0], $plugintypename[1]).'/db/eventsengine.php';
-    if (file_exists($eventsenginefile)) {
-        require($eventsenginefile);
+    $eventsengine = [];
+    $eventsactions = [];
+    if (block_eventsengine_load_for_plugin($pluginengs[0], $eventsengine, $eventsactions)) {
         if (!empty($eventsengine[$event][$pluginengs[1]])) {
             return $eventsengine[$event][$pluginengs[1]];
         }
@@ -194,10 +219,9 @@ function block_eventsengine_get_engine_def($pluginengine, $event) {
 function block_eventsengine_get_action_def($pluginaction) {
     // ToDO: add caching.
     $pluginacts = explode(':', $pluginaction, 2);
-    $plugintypename = explode('_', $pluginacts[0], 2);
-    $actionfile = core_component::get_plugin_directory($plugintypename[0], $plugintypename[1]).'/db/eventsengine.php';
-    if (file_exists($actionfile)) {
-        require($actionfile);
+    $eventsengine = [];
+    $eventsactions = [];
+    if (block_eventsengine_load_for_plugin($pluginacts[0], $eventsengine, $eventsactions)) {
         if (!empty($eventsactions[$pluginacts[1]])) {
             return $eventsactions[$pluginacts[1]];
         }
@@ -228,10 +252,20 @@ function block_eventsengine_handler($event) {
         if (empty($actiondef)) {
             continue;
         }
-        if ((empty($engine['available']) || $engine['available']()) &&
-                (empty($actiondef['available']) || $actiondef['available']()) &&
-                ($muserid = $engine['ready']($event, @unserialize($assign->enginedata)))) {
-            $actiondef['trigger']($muserid, @unserialize($assign->actiondata));
+        try {
+            $available = (empty($engine['available']) || $engine['available']()) && (empty($actiondef['available']) || $actiondef['available']());
+        } catch (Exception $e) {
+            $available = false;
+            error_log("block_eventsengine_handler({$event->eventname}): Exception in available(): ".$e->getMessage());
+        }
+        if ($available) {
+            try {
+                if (($muserid = $engine['ready']($event, @unserialize($assign->enginedata)))) {
+                    $actiondef['trigger']($muserid, @unserialize($assign->actiondata));
+                }
+            } catch (Exception $e) {
+                error_log("block_eventsengine_handler({$event->eventname}): Exception in ready() or trigger(): ".$e->getMessage());
+            }
         }
     }
 }

@@ -32,7 +32,7 @@ class block_eventsengine extends block_base {
         $assigns = $DB->get_recordset('block_eventsengine_assign');
         $todisplay = [];
         foreach ($assigns as $assign) {
-            $engine = block_eventsengine_get_engine_def($assign->engine, $assign->event)
+            $engine = block_eventsengine_get_engine_def($assign->engine, $assign->event);
             if (empty($engine)) {
                 // This engine no longer exists so lets just delete it now!
                 $DB->delete_records('block_eventsengine_assign', ['id' => $assign->id]);

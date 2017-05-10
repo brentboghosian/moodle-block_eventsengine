@@ -55,12 +55,20 @@ if (!empty($id) && !$DB->record_exists('block_eventsengine_assign', ['id' => $id
         $assign->action = $data->action;
         $assign->timemodified = time();
         $engine = block_eventsengine_get_engine_def($data->engine, $data->event);
-        $assign->enginedata = $engine['getformdata']((object)$data->enginedata);
+        try {
+            $assign->enginedata = $engine['getformdata']((object)$data->enginedata);
+        } catch (Exception $e) {
+            error_log("block_eventsengine::editengine.php: Exception in engine {$data->engine} getformdata: ".$e->getMessage());
+        }
         if (!empty($assign->enginedata)) {
             $assign->enginedata = @serialize($assign->enginedata);
         } // TBD: else error.
         $action = block_eventsengine_get_action_def($data->action);;
-        $assign->actiondata = $action['getformdata']((object)$data->actiondata);
+        try {
+            $assign->actiondata = $action['getformdata']((object)$data->actiondata);
+        } catch (Exception $e) {
+            error_log("block_eventsengine::editengine.php: Exception in action {$data->action} getformdata: ".$e->getMessage());
+        }
         if (!empty($assign->actiondata)) {
             $assign->actiondata = @serialize($assign->actiondata);
         } // TBD: else error.
