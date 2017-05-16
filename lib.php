@@ -236,6 +236,16 @@ function block_eventsengine_get_action_def($pluginaction) {
  */
 function block_eventsengine_handler($event) {
     global $DB;
+    // Need an array to track events because another observed event could be triggered,
+    // [indirectly] by this event handler, delaying/unsequencing the event order.
+    static $previousevents = [];
+    $serializedevent = @serialize($event);
+    if (in_array($serializedevent, $previousevents)) {
+        debugging("block_eventsengine_handler({$event->eventname}): Aborting multiple trigger. (stored ".count($previousevents).')',
+                DEBUG_DEVELOPER);
+        return; // Prevent multiple plugins triggering same callback (this).
+    }
+    $previousevents[] = $serializedevent;
     $assigns = $DB->get_records('block_eventsengine_assign', ['event' => $event->eventname]);
     foreach ($assigns as $assign) {
         $pluginengs = explode(':', $assign->engine, 2);
