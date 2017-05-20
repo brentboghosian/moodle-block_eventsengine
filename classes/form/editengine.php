@@ -30,7 +30,7 @@ class editengine extends \moodleform {
         forach ($events as $event) {
             $eventsengine = [];
             $eventsactions = [];
-            if (block_eventsengine_load_for_plugin($event->plugin, $eventsengine, $eventsactions)) {
+            if (!$event->disabled && block_eventsengine_load_for_plugin($event->plugin, $eventsengine, $eventsactions)) {
                 if (!empty($eventsengine[$event->event])) {
                     foreach ($eventsengine[$event->event] as $shortname => $engine) {
                         if (!($available = empty($engine['available']))) {
@@ -55,7 +55,7 @@ class editengine extends \moodleform {
         forach ($actions as $action) {
             $eventsengine = [];
             $eventsactions = [];
-            if (block_eventsengine_load_for_plugin($action->plugin, $eventsengine, $eventsactions)) {
+            if (!$action->disabled && block_eventsengine_load_for_plugin($action->plugin, $eventsengine, $eventsactions)) {
                 foreach ($eventsactions as $shortname => $act) {
                     if (!($available = empty($act['available']))) {
                         try {
