@@ -20,8 +20,9 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_url('/blocks/eventsengine/editengine.php');
 
 $returnurl = required_param('returnurl', PARAM_URL);
-$id = optional_param('id', PARAM_INT);
-$delete = optional_param('delete', PARAM_ALPHANUMEXT);
+$id = optional_param('id', 0, PARAM_INT);
+$delete = optional_param('delete', '', PARAM_ALPHANUMEXT);
+$context = optional_param('context', 'user', PARAM_ALPHANUMEXT);
 
 echo $OUTPUT->header();
 
@@ -34,6 +35,9 @@ if (!empty($id) && !$DB->record_exists('block_eventsengine_assign', ['id' => $id
     $assign = $id ? $DB->get_record('block_eventsengine_assign', ['id' => $id]) : new stdClass;
     if ($id && !is_siteadmin() && USER->id != $assign->owner) {
         redirect($returnurl, get_string('notpermitted', 'block_eventsengine'), 15);
+    }
+    if (empty($assign->context)) {
+        $assign->context = $context;
     }
     $mainform = new \block_eventsengine\form\editengine($PAGE->url, $assign);
     $dataform = new \block_eventsengine\form\dataform($PAGE->url);

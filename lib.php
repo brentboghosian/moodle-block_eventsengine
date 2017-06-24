@@ -270,8 +270,8 @@ function block_eventsengine_handler($event) {
         }
         if ($available) {
             try {
-                if (($muserid = $engine['ready']($event, @unserialize($assign->enginedata)))) {
-                    $actiondef['trigger']($muserid, @unserialize($assign->actiondata));
+                if (($contextid = $engine['ready']($event, @unserialize($assign->enginedata)))) {
+                    $actiondef['trigger']($contextid, @unserialize($assign->actiondata));
                 }
             } catch (Exception $e) {
                 error_log("block_eventsengine_handler({$event->eventname}): Exception in ready() or trigger(): ".$e->getMessage());

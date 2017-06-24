@@ -12,6 +12,7 @@
 $eventsactions = [
     'profile_field_update' => [
         'name' => 'Update User Profile Field',
+        'context' => 'user',
         'configform' => function(&$mform) {
                             global $DB;
                             $fields = $DB->get_recordset('user_info_field', null, '', 'id,name');
@@ -55,6 +56,7 @@ $eventsactions = [
     ],
     'enrol_into_course' => [
         'name' => 'Enrol into Course',
+        'context' => 'user',
         'configform' => function(&$mform) {
                             global $DB;
                             $courses = $DB->get_recordset('course', null, '', 'id,shortname');
@@ -87,6 +89,7 @@ $eventsactions = [
 $eventsengine = [
     '\core\event\course_completed' => ['moodle_course_complete_grade_range' => [
         'name' => 'Moodle Course completed with grade',
+        'context' => 'user',
         'display' => function($enginedata) {
                          global $PAGE;
                          $pgcontext = $PAGE->context;
@@ -146,6 +149,7 @@ $eventsengine = [
     ]],
     '\local_elisprogram\event\crlm_class_completed' => ['class_complete_grade_range' => [
         'name' => 'ELIS Class Instance completed with grade',
+        'context' => 'user',
         'display' => function($enginedata) {
                          global $PAGE;
                          $pgcontext = $PAGE->context;
@@ -207,6 +211,7 @@ $eventsengine = [
                          }
     ], 'course_complete_grade_range' => [
         'name' => 'ELIS Course completed with grade',
+        'context' => 'user',
         'display' => function($enginedata) {
                          global $PAGE;
                          $pgcontext = $PAGE->context;
@@ -269,8 +274,8 @@ $eventsengine = [
                          }
     ]],
     '\local_elisprogram\event\curriculum_completed' => ['program_complete' => [
-        // ELIS Program does not yet trigger this event.
         'name' => 'ELIS Program completed',
+        'context' => 'user',
         'display' => function($enginedata) {
                          global $PAGE;
                          $pgcontext = $PAGE->context;

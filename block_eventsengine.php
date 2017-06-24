@@ -63,6 +63,7 @@ class block_eventsengine extends block_base {
                     $owner = fullname($mdluser);
                 }
                 $details = get_string('event', 'block_eventsengine').': '.$item->event."\n".
+                        get_string('context', 'block_eventsengine').': '.$item->context."\n".
                         get_string('engine', 'block_eventsengine').': '.$item->engine."\n".
                         get_string('action', 'block_eventsengine').': '.($item->actionexists ? $item->action : '-')."\n".
                         get_string('available', 'block_eventsengine').': '.$item->available."\n".
@@ -87,10 +88,20 @@ class block_eventsengine extends block_base {
         } else {
             $this->content->text .= html_writer::tag('p', get_string('noengines', 'block_eventsengine'));
         }
+        $this->content->text .= html_writer::empty_tag('br'); // TBD?
 
-        // TBD: Add capabilities to restrict access.
-        $this->content->text .= html_writer::link(new moodle_url('/blocks/eventsengine/editengine.php',['returnurl' => $PAGE->url]),
-                get_string('addengine', 'block_eventsengine'));
+        // TBD: Add capabilities to restrict access to creation.
+
+        // New eventsengine selector of contexts.
+        $contextmenu = $DB->get_records_menu('block_eventsengine_events', null, '', 'DISTINCT context');
+        $this->content->text .= html_writer::tag('form',
+                html_writer::tag('label', $get_string('selectnewenginecontext', 'block_eventsengine', ['for' => 'context']).
+                html_writer::select($contextmenu, 'context', '',
+                        ['' => get_string('choose', 'block_eventsengine')],
+                        [ /* TBD */]), [
+                            'id' => 'block_eventsengine_createform',
+                            'method' => 'get',
+                            'action' => new moodle_url('/blocks/eventsengine/editengine.php', ['returnurl' => $PAGE->url])]);
 
         return $this->content;
     }

@@ -24,8 +24,9 @@ class editengine extends \moodleform {
             unset($assign->actiondata);
             $this->set_data($assign);
         }
+        $grparams = empty($assign->context) ? [] : ['context' => $assign->context];
         // Base engine params
-        $events = $DB->get_records('block_eventsengine_events');
+        $events = $DB->get_records('block_eventsengine_events', $grparams);
         $choices = [];
         forach ($events as $event) {
             $eventsengine = [];
@@ -50,7 +51,7 @@ class editengine extends \moodleform {
             }
         }
         // Actions
-        $actions = $DB->get_records('block_eventsengine_actions');
+        $actions = $DB->get_records('block_eventsengine_actions', $grparams);
         $selections = [];
         forach ($actions as $action) {
             $eventsengine = [];
