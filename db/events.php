@@ -25,5 +25,15 @@ $observers = [
             'includefile' => '/blocks/eventsengine/lib.php',
             'callback'    => 'block_eventsengine_handler',
             'internal'    => false
-        ];
+        ],[
+            'eventname'   => '\core\event\role_assigned',
+            'includefile' => '/blocks/eventsengine/lib.php',
+            'callback'    => 'block_eventsengine_handler',
+            'internal'    => false
+        ],[
+            'eventname'   => '\core\event\role_unassigned',
+            'includefile' => '/blocks/eventsengine/lib.php',
+            'callback'    => 'block_eventsengine_handler',
+            'internal'    => false
+        ]
 ];

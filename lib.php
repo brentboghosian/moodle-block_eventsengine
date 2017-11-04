@@ -16,12 +16,12 @@ define('BLOCK_EVENTSENGINE_FILE', '/db/eventsengine.php');
  *
  * @throws coding_exception If input numbers aren't numbers, or comparison operator isn't valid.
  * @param string|int|float $num1 The first number
- * @param string|int|float $num2 The second number
  * @param string $op The math operation to perform, i.e. $num1 $op $num2 where $op maybe '<', '>', '=='('='), '>=', '<=', '!='
+ * @param string|int|float $num2 The second number
  * @param bool $nobcmath Optional param if true, forces function not to use bcmath (for testing), defaults to false
  * @return bool The outcome of the float comparison: true or false
  */
-function block_eventsengine_float_comp($num1, $num2, $op, $nobcmath = false) {
+function block_eventsengine_float_comp($num1, $op, $num2, $nobcmath = false) {
     // Valid comparison operations, and their associated bcmath returns.
     static $validopsmap = array(
         '<' => array(-1),
@@ -120,6 +120,37 @@ function block_eventsengine_float_comp($num1, $num2, $op, $nobcmath = false) {
 }
 
 /**
+ * Substitute string variables.
+ *
+ * @param string $in The input string.
+ * @param array|object The variables and values.
+ * @return string The result string.
+ */
+function block_eventsengine_sub_str_vars($in, $a) {
+    $search = [];
+    $replace = [];
+    $a = (array)$a;
+    foreach ($a as $key => $value) {
+        if (is_string($value) || is_numeric($value)) {
+            $search[] = '{$a->'.$key.'}';
+            $replace[] = (string)$value;
+        } else if (is_array($value) || is_object($value)) {
+            $value = (array)$value;
+            foreach ($value as $k2 => $v2) {
+                if (is_string($v2) || is_numeric($v2)) {
+                    $search[] = '{$a->'.$key.'->'.$k2.'}'; // TBD: just '_' for 2nd '->'?
+                    $replace[] = (string)$v2;
+                }
+            }
+        }
+    }
+    if (!empty($search)) {
+        return str_replace($search, $replace, $in);
+    }
+    return $in;
+}
+
+/**
  * Registers a plugin contains events handlers for a specific type of event.
  *
  * @param string $plugin
@@ -139,6 +170,8 @@ function block_eventsengine_load_for_plugin($plugin, &$evtsengine, &$evtsactions
         } catch (Exception $e) {
             error_log("block_eventsengine_load_for_plugin({$plugin}): Exception loading ".BLOCKEVENTS_ENGINE_FILE.' :'.$e->getMessage());
         }
+    } else {
+        error_log("block_eventsengine_load_for_plugin({$plugin}): File not found: {$eventsenginefile}");
     }
     return false;
 }
@@ -150,44 +183,24 @@ function block_eventsengine_load_for_plugin($plugin, &$evtsengine, &$evtsactions
  */
 function block_eventsengine_register($plugin) {
     global $DB;
-    delete_records('block_eventsengine_actions', ['plugin' => $plugin]);
-    delete_records('block_eventsengine_events', ['plugin' => $plugin]);
-    $eventsengine = [];
+    $DB->delete_records('block_eventsengine_actions', ['plugin' => $plugin]);
+    $DB->delete_records('block_eventsengine_events', ['plugin' => $plugin]);
+    $eventsengines = [];
     $eventsactions = [];
-    if (block_eventsengine_load_for_plugin($plugin, $eventsengine, $eventsactions)) {
+    if (block_eventsengine_load_for_plugin($plugin, $eventsengines, $eventsactions)) {
         foreach ($eventsactions as $action => $actiondata) {
-            $DB->insert_record('block_eventsengine_actions', (object)['plugin' => $plugin, 'action' => $action]);
+            $DB->insert_record('block_eventsengine_actions', (object)['plugin' => $plugin, 'action' => $action,
+                'context' => $actiondata['context']]);
         }
-        foreach ($eventsengine as $event => $engine) {
-            $DB->insert_record('block_eventsengine_events', (object)['plugin' => $plugin, 'event' => $event]);
-            // Note: Developer MUST manually ensure all required events are observed to call
-            // blocks/eventsengine/lib.php::block_eventsengine_handler in plugin's db/events.php
-        }
-    }
-}
-
-/**
- * Get engine event.
- * Inefficient - do not use!
- *
- * @param string $pluginengine Format 'pluginname:enginename' or empty for all.
- * @return string"bool The event name or false if $pluginengine not found
- */
-function block_eventsengine_get_engine_event($pluginengine) {
-    // ToDO: add caching.
-    $pluginengs = explode(':', $pluginengine, 2);
-    $eventsengine = [];
-    $eventsactions = [];
-    if (block_eventsengine_load_for_plugin($pluginengs[0], $eventsengine, $eventsactions)) {
-        foreach ($eventsengine as $eventname => $engines) {
-            foreach ($engines as $enginename => $engine) {
-                if ($enginename == $pluginengine) {
-                    return $eventname;
-                }
+        foreach ($eventsengines as $event => $engines) {
+            foreach ($engines as $enginekey => $engine) {
+                $DB->insert_record('block_eventsengine_events', (object)['plugin' => $plugin, 'event' => $event,
+                    'engine' => $enginekey, 'context' => $engine['context']]);
+                // Note: Developer MUST manually ensure all required events are observed to call
+                // blocks/eventsengine/lib.php::block_eventsengine_handler in plugin's db/events.php
             }
         }
     }
-    return false;
 }
 
 /**
@@ -230,6 +243,17 @@ function block_eventsengine_get_action_def($pluginaction) {
 }
 
 /**
+ * Get engine or action name..
+ *
+ * @param string $engineoraction Format 'pluginname:enginename' or 'pluginname:actionname'
+ * @return string The name of the entity or empty string if not found.
+ */
+function block_eventsengine_get_name($engineoraction) {
+    $parts = explode(':', $engineoraction, 2);
+    return get_string_manager()->string_exists($parts[1], $parts[0]) ? get_string($parts[1], $parts[0]) : '';
+}
+
+/**
  * Single event handler to hook into dispatched events.
  *
  * @param object $event
@@ -239,23 +263,41 @@ function block_eventsengine_handler($event) {
     // Need an array to track events because another observed event could be triggered,
     // [indirectly] by this event handler, delaying/unsequencing the event order.
     static $previousevents = [];
-    $serializedevent = @serialize($event);
-    if (in_array($serializedevent, $previousevents)) {
-        debugging("block_eventsengine_handler({$event->eventname}): Aborting multiple trigger. (stored ".count($previousevents).')',
-                DEBUG_DEVELOPER);
-        return; // Prevent multiple plugins triggering same callback (this).
+    // error_log("block_eventsengine_handler({$event->eventname}): INFO: Begin");
+    $encodedevent = @json_encode($event->get_data());
+    if (in_array($encodedevent, $previousevents)) {
+        error_log("block_eventsengine_handler({$event->eventname}): Aborting multiple trigger. (stored ".count($previousevents).')');
+        // debugging("block_eventsengine_handler({$event->eventname}): Aborting multiple trigger. (stored ".count($previousevents).')', DEBUG_DEVELOPER);
+        return true; // Prevent multiple plugins triggering same callback (this).
     }
-    $previousevents[] = $serializedevent;
+    $previousevents[] = $encodedevent;
     $assigns = $DB->get_records('block_eventsengine_assign', ['event' => $event->eventname]);
+    if (debugging('', DEBUG_DEVELOPER)) {
+        ob_start();
+        var_dump($previousevents);
+        $tmp = ob_get_contents();
+        ob_end_clean();
+        error_log("block_eventsengine_handler({$event->eventname}): INFO: previousevents[] = {$tmp}");
+    }
     foreach ($assigns as $assign) {
+        // error_log("block_eventsengine_handler({$event->eventname}): INFO: assignid = {$assign->id}");
+        if ($assign->disabled) {
+            continue;
+        }
         $pluginengs = explode(':', $assign->engine, 2);
-        $engine = block_eventsengine_get_engine_def($assign->engine, $event->eventname)
+        $enginedisabled = $DB->get_field('block_eventsengine_events', 'disabled', ['engine' => $pluginengs[1],
+            'plugin' => $pluginengs[0]]);
+        if (!empty($enginedisabled)) {
+            continue;
+        }
+        $engine = block_eventsengine_get_engine_def($assign->engine, $event->eventname);
         if (empty($engine)) {
             continue;
         }
         $pluginacts = explode(':', $assign->action, 2);
-        $action = $DB->get_record('block_eventsengine_actions', ['action' => $pluginacts[1]]);
-        if (empty($action)) {
+        $actiondisabled = $DB->get_field('block_eventsengine_actions', 'disabled', ['action' => $pluginacts[1],
+            'plugin' => $pluginacts[0]]);
+        if (!empty($actiondisabled)) {
             continue;
         }
         $actiondef = block_eventsengine_get_action_def($assign->action);
@@ -266,17 +308,22 @@ function block_eventsengine_handler($event) {
             $available = (empty($engine['available']) || $engine['available']()) && (empty($actiondef['available']) || $actiondef['available']());
         } catch (Exception $e) {
             $available = false;
-            error_log("block_eventsengine_handler({$event->eventname}): Exception in available(): ".$e->getMessage());
+            error_log("block_eventsengine_handler({$event->eventname}): assign id = {$assign->id} - Exception in available(): ".$e->getMessage());
         }
         if ($available) {
             try {
-                if (($contextid = $engine['ready']($event, @unserialize($assign->enginedata)))) {
-                    $actiondef['trigger']($contextid, @unserialize($assign->actiondata));
+                $enginedata = !empty($assign->enginedata) ? (object)@unserialize($assign->enginedata) : null;
+                if (($contextid = $engine['ready']($event, $enginedata))) {
+                    $actiondata = !empty($assign->actiondata) ? (object)@unserialize($assign->actiondata) : null;
+                    $actiondef['trigger']($contextid, $actiondata, $event);
                 }
             } catch (Exception $e) {
-                error_log("block_eventsengine_handler({$event->eventname}): Exception in ready() or trigger(): ".$e->getMessage());
+                error_log("block_eventsengine_handler({$event->eventname}): assign id = {$assign->id} -".
+                        " Exception in engine::ready() or action::trigger(): ".$e->getMessage());
             }
         }
     }
+    // error_log("block_eventsengine_handler({$event->eventname}): INFO: Exit");
+    return true;
 }
 

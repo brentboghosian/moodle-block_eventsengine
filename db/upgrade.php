@@ -14,12 +14,13 @@ defined('MOODLE_INTERNAL') || die();
  * Install for block_eventsengine
  * @return boolean
  */
-function xmldb_block_eventsengine_install() {
+function xmldb_block_eventsengine_upgrade($oldversion = 0) {
     global $CFG;
+    $result = true;
 
     // Always make sure up-to-date definitions - db/upgrade.php as well!
     require_once($CFG->dirroot.'/blocks/eventsengine/lib.php');
     block_eventsengine_register('block_eventsengine');
 
-    return true;
+    return $result;
 }

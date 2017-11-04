@@ -8,8 +8,9 @@
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="plugin"/>
         <FIELD NAME="plugin" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="e.g. moodle, mod_forum, block_rss_client" PREVIOUS="id" NEXT="event"/>
-        <FIELD NAME="event" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="" PREVIOUS="plugin" NEXT="context"/>
-        <FIELD NAME="context" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="user" SEQUENCE="false" COMMENT="" PREVIOUS="event" NEXT="disabled"/>
+        <FIELD NAME="event" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="" PREVIOUS="plugin" NEXT="name"/>
+        <FIELD NAME="engine" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="" PREVIOUS="event" NEXT="context"/>
+        <FIELD NAME="context" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="user" SEQUENCE="false" COMMENT="" PREVIOUS="engine" NEXT="disabled"/>
         <FIELD NAME="disabled" TYPE="int" LENGTH="2" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Disabled flag" PREVIOUS="context"/>
       </FIELDS>
       <KEYS>
@@ -23,7 +24,7 @@
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="plugin"/>
         <FIELD NAME="plugin" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="e.g. moodle, mod_forum, block_rss_client" PREVIOUS="id" NEXT="shortname"/>
-        <FIELD NAME="action" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="" PREVIOUS="plugin" NEXT="disabled"/>
+        <FIELD NAME="action" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="" PREVIOUS="plugin" NEXT="context"/>
         <FIELD NAME="context" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="user" SEQUENCE="false" COMMENT="" PREVIOUS="action" NEXT="disabled"/>
         <FIELD NAME="disabled" TYPE="int" LENGTH="2" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Disabled flag" PREVIOUS="context"/>
       </FIELDS>
@@ -43,7 +44,8 @@
         <FIELD NAME="action" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="" PREVIOUS="engine" NEXT="owner"/>
         <FIELD NAME="owner" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" COMMENT="The Moodle userid that this instance belongs to." PREVIOUS="action" NEXT="enginedata"/>
         <FIELD NAME="enginedata" TYPE="text" LENGTH="medium" NOTNULL="false" SEQUENCE="false" COMMENT="The engine data serialized PHP array or object." PREVIOUS="owner" NEXT="actiondata"/>
-        <FIELD NAME="actiondata" TYPE="text" LENGTH="medium" NOTNULL="false" SEQUENCE="false" COMMENT="The action data serialized PHP array or object." PREVIOUS="enginedata" NEXT="timecreated"/>
+        <FIELD NAME="actiondata" TYPE="text" LENGTH="medium" NOTNULL="false" SEQUENCE="false" COMMENT="The action data serialized PHP array or object." PREVIOUS="enginedata" NEXT="disabled"/>
+        <FIELD NAME="disabled" TYPE="int" LENGTH="2" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Disabled flag" PREVIOUS="actiondata" NEXT="timecreated"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="actiondata" NEXT="timemodified"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="timecreated"/>
       </FIELDS>
