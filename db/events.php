@@ -35,5 +35,10 @@ $observers = [
             'includefile' => '/blocks/eventsengine/lib.php',
             'callback'    => 'block_eventsengine_handler',
             'internal'    => false
+        ],[
+            'eventname'   => '\core\event\user_enrolment_created',
+            'includefile' => '/blocks/eventsengine/lib.php',
+            'callback'    => 'block_eventsengine_handler',
+            'internal'    => false
         ]
 ];
