@@ -370,6 +370,42 @@ $eventsactions = [
 
 // Array of core eventsengine:
 $eventsengine = [
+    '\core\event\user_enrolment_created' => ['moodle_course_enrolled' => [
+        'context' => 'user',
+        'display' => function($enginedata) {
+                         global $PAGE, $USER;
+                         $pgcontext = $PAGE->context;
+                         return ($pgcontext == context_system::instance() || $pgcontext == context_user::instance($USER->id) ||
+                                 $pgcontext == context_course::instance($enginedata->courseid));
+                     },
+        'ready' => function($event, $enginedata) {
+                       global $DB;
+                       if ($enginedata->courseid == $event->courseid) {
+                           return $event->relateduserid;
+                       }
+                       return false;
+                   },
+        'configform' => function(&$mform, $assign) {
+                            global $DB;
+                            $mcourses = $DB->get_recordset('course', null, '', 'id,shortname');
+                            $choices = [];
+                            foreach ($mcourses as $id => $mcourse) {
+                                if ($id > 1) {
+                                    $choices[$id] = $mcourse->shortname;
+                                }
+                            }
+                            $group = [];
+                            $group[] =& $mform->createElement('select', 'courseid', get_string('mcourse', 'block_eventsengine').':&nbsp;', $choices);
+                            return $group;
+                        },
+        'getformdata' => function($formdata) {
+                             $data = [];
+                             if (isset($formdata->courseid)) {
+                                 $data['courseid'] = $formdata->courseid;
+                             }
+                             return $data;
+                         }
+    ]],
     '\core\event\course_completed' => ['moodle_course_complete_grade_range' => [
         'context' => 'user',
         'display' => function($enginedata) {
