@@ -10,7 +10,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2017050400;
+$plugin->version = 2017050401;
 $plugin->requires = 2015111600;
 $plugin->component = 'block_eventsengine';
 $plugin->maturity = MATURITY_STABLE;
