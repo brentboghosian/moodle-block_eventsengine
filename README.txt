@@ -9,6 +9,8 @@ Included with the block are a few standard engine and action defintions,
 
 Event Engines:
 --------------
+'Moodle Course enrolled' - triggers for user when they are enrolled into a Moodle Course.
+
 'Moodle Course completed with grade' - triggers for user if they achieve grade within a specified range in a Moodle Course.
 
 'ELIS Class Instance completed with grade' - triggers for user if they achieve grade within a specified range in an ELIS Class Instance.
