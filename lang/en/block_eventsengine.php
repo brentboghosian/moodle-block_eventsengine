@@ -34,7 +34,25 @@ $string['editcancelled'] = 'Edit Engine cancelled.';
 $string['editengine'] = 'Edit Engine';
 $string['editengineform'] = 'Edit Engine Form';
 $string['email_users'] = 'Send Email to Users';
-$string['email_users_help'] = 'Enter a comma-separate list of valid user\'s email, username or \'?\' for target user (user context only). The message subject & body may contain event properties as well as target user fullname and course shortname.';
+$string['email_users_help'] = 'Enter a comma-separate list of valid user\'s email, username or \'?\' for target user (user context only).<br/><br/>
+The message subject & body may contain the following parameters: {$a->...<br/>
+user - The fullname of the subject user being acted upon.<br/>
+course - The shortname of the event\'s course.<br/>
+eventname - The event class.<br/>
+component - The event plugin type.<br/>
+action - The event action.<br/>
+target - The event target.<br/>
+objecttable - The event DB table.<br/>
+crud - The event parameter.<br/>
+edulevel - The event parameter.<br/>
+contextid - The event context id.<br/>
+contextlevel - The event context level.<br/>
+contextinstanceid - The event context instance id.<br/>
+userid - The event userid (usually the user that triggered the event).<br/>
+courseid - The event courseid.<br/>
+relateduserid - The event related userid (usually the subject user).<br/>
+anonymous - The event parameter.<br/>
+other->... - More event dependent parameters.';
 $string['enable'] = 'Enable';
 $string['engine'] = 'Engine';
 $string['enginedata'] = 'Engine Parameters';
@@ -48,9 +66,32 @@ $string['eventsengine:myaddinstance'] = 'Add a new Events Engine block to My hom
 $string['fieldid'] = 'Profile field';
 $string['listingtitle'] = 'Events Engine Instances';
 $string['make_webservice_call'] = 'Make a WebServices call';
-$string['make_webservice_call_help'] = 'The URL must contain all required parameters; REST Eg. URL: http://site/webservice/rest/server.php?wstoken={YourToken}&wsfunction={YourMethod}&moodlewsrestformat=json
-Options & data must be formatted as one "key: value" pair per line.
-A data line with \'method\' is required for XMLRPC.';
+$string['make_webservice_call_help'] = 'The URL must contain all required parameters; REST Eg. URL: http://site/webservice/rest/server.php?wstoken={YourToken}&wsfunction={YourMethod}&moodlewsrestformat=json<br/><br/>
+Options & data must be formatted as one "key: value" pair per line.<br/>
+A data line with \'method\' is required for XMLRPC.<br/><br/>
+The data may contain the following parameters: {$a->...<br/>
+course - The shortname of the event\'s course.<br/>
+eventname - The event class.<br/>
+component - The event plugin type.<br/>
+action - The event action.<br/>
+target - The event target.<br/>
+objecttable - The event DB table.<br/>
+crud - The event parameter.<br/>
+edulevel - The event parameter.<br/>
+contextid - The event context id.<br/>
+contextlevel - The event context level.<br/>
+contextinstanceid - The event context instance id.<br/>
+userid - The event userid (usually the user that triggered the event).<br/>
+user_username - The user\'s username.<br/>
+user_idnumber - The user\'s idnumber.<br/>
+user_email - The user\'s email.<br/>
+courseid - The event courseid.<br/>
+relateduserid - The event related userid (usually the subject user).<br/>
+relateduser_username - The subject user\'s username.<br/>
+relateduser_idnumber - The subject user\'s idnumber.<br/>
+relateduser_email - The subject user\'s email.<br/>
+anonymous - The event parameter.<br/>
+other->... - More event dependent parameters.';
 $string['maxgrade'] = 'Maximum grade';
 $string['mcourse'] = 'Moodle Course';
 $string['mingrade'] = 'Minimum grade';
