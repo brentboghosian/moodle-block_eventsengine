@@ -380,7 +380,8 @@ $eventsengine = [
                      },
         'ready' => function($event, $enginedata) {
                        global $DB;
-                       if ($enginedata->courseid == $event->courseid) {
+                       $crsids = (array)$enginedata->courseid;
+                       if (in_array($event->courseid, $crsids)) {
                            return $event->relateduserid;
                        }
                        return false;
@@ -395,7 +396,8 @@ $eventsengine = [
                                 }
                             }
                             $group = [];
-                            $group[] =& $mform->createElement('select', 'courseid', get_string('mcourse', 'block_eventsengine').':&nbsp;', $choices);
+                            $group[] =& $mform->createElement('select', 'courseid', get_string('mcourse', 'block_eventsengine').
+                                    ':&nbsp;', $choices, ['multiple' => 'multiple']);
                             return $group;
                         },
         'getformdata' => function($formdata) {
