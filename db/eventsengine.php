@@ -338,7 +338,7 @@ $eventsactions = [
                              var_dump($data);
                              $tmp = ob_get_contents();
                              ob_end_clean();
-                             error_log('block_eventsengine::make_webservice_call: curlopts,data = '.$tmp);
+                             block_eventsengine_log('block_eventsengine::make_webservice_call: curlopts,data = '.$tmp);
                          }
                          $settings = [];
                          if (!empty($data['cookie'])) {
@@ -360,9 +360,10 @@ $eventsactions = [
                                  }
                                  break;
                          }
-                         // TBD: return?, logging?
-                         if ($ret && debugging('', DEBUG_DEVELOPER)) {
-                             error_log('block_eventsengine::make_webservice_call: response(0..255) = '.substr($ret, 0, 255));
+                         // TBD: return logging?
+                         if (!empty($ret)) { // TBD: DEBUG_DEVELOPER?
+                             block_eventsengine_log('block_eventsengine::make_webservice_call: response(0..255) = '.
+                                     substr($ret, 0, 255));
                          }
                      }
     ]

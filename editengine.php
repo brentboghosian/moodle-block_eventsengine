@@ -50,7 +50,7 @@ if (!empty($id) && !$DB->record_exists('block_eventsengine_assign', ['id' => $id
     } else {
         if (empty($context) || empty($engine) || strpos($engine, ':') === false ||
                 empty($eeaction) || strpos($eeaction, ':') === false) {
-            error_log("editengine.php::missing context|engine|action");
+            block_eventsengine_log("editengine.php::missing context|engine|action");
             redirect($returnurl, get_string('error'), 15); // TBD?
         }
         $assign = new stdClass;
@@ -74,7 +74,8 @@ if (!empty($id) && !$DB->record_exists('block_eventsengine_assign', ['id' => $id
         try {
             $assign->enginedata = $engine['getformdata']((object)$data->enginedata);
         } catch (Exception $e) {
-            error_log("block_eventsengine::editengine.php: Exception in engine {$data->engine} getformdata: ".$e->getMessage());
+            block_eventsengine_log("block_eventsengine::editengine.php: Exception in engine {$data->engine} getformdata: ".
+                    $e->getMessage());
         }
         if (!empty($assign->enginedata)) {
             $assign->enginedata = @serialize($assign->enginedata);
@@ -85,7 +86,8 @@ if (!empty($id) && !$DB->record_exists('block_eventsengine_assign', ['id' => $id
         try {
             $assign->actiondata = $action['getformdata']((object)$data->actiondata, $context);
         } catch (Exception $e) {
-            error_log("block_eventsengine::editengine.php: Exception in action {$data->action} getformdata: ".$e->getMessage());
+            block_eventsengine_log("block_eventsengine::editengine.php: Exception in action {$data->action} getformdata: ".
+                    $e->getMessage());
         }
         if (!empty($assign->actiondata)) {
             $assign->actiondata = @serialize($assign->actiondata);
