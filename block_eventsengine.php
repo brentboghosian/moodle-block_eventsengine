@@ -47,7 +47,7 @@ class block_eventsengine extends block_base {
                     $available = $def['available']();
                 } catch (Exception $e) {
                     $available = false;
-                    error_log("block_eventsengine:get_table_menu: Exception in {$key}:available(): ".
+                    block_eventsengine_log("block_eventsengine:get_table_menu: Exception in {$key}:available(): ".
                             $e->getMessage());
                 }
             }
