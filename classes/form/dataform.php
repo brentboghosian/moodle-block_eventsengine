@@ -64,7 +64,8 @@ class dataform extends \moodleform {
                 }
             }
         } catch (Exception $e) {
-            error_log("block_eventsengine:form:dataform: Exception in engine {$assign->engine} configform: ".$e->getMessage());
+            block_eventsengine_log("block_eventsengine:form:dataform: Exception in engine {$assign->engine} configform: ".
+                    $e->getMessage());
         }
 
         // Get action setting and add sub-form.
@@ -80,7 +81,8 @@ class dataform extends \moodleform {
                 }
             }
         } catch (Exception $e) {
-            error_log("block_eventsengine:form:dataform: Exception in action {$assign->action} configform: ".$e->getMessage());
+            block_eventsengine_log("block_eventsengine:form:dataform: Exception in action {$assign->action} configform: ".
+                    $e->getMessage());
         }
 
         $this->add_action_buttons();

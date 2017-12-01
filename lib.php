@@ -151,6 +151,25 @@ function block_eventsengine_sub_str_vars($in, $a) {
 }
 
 /**
+ * Custom logging for eventsengine.
+ *
+ * @param string $msg The message to log.
+ */
+function block_eventsengine_log($msg) {
+    global $CFG;
+
+    $timestamp = strftime('%Y-%m-%d %T');
+    list($datepart, $timepart) = explode(' ', $timestamp);
+    $dir = "{$CFG->dataroot}/eventsengine";
+    if (!is_dir($dir)) {
+        @mkdir($dir);
+    }
+    $logfile = "{$dir}/{$datepart}.log";
+    file_put_contents($logfile, "[{$timestamp}] {$msg}\n", FILE_APPEND);
+    // TBD: compress previous log file(s)?
+}
+
+/**
  * Registers a plugin contains events handlers for a specific type of event.
  *
  * @param string $plugin
@@ -168,10 +187,11 @@ function block_eventsengine_load_for_plugin($plugin, &$evtsengine, &$evtsactions
             $evtsengine = $eventsengine;
             return true;
         } catch (Exception $e) {
-            error_log("block_eventsengine_load_for_plugin({$plugin}): Exception loading ".BLOCKEVENTS_ENGINE_FILE.' :'.$e->getMessage());
+            block_eventsengine_log("block_eventsengine_load_for_plugin({$plugin}): Exception loading ".
+                    BLOCKEVENTS_ENGINE_FILE.' :'.$e->getMessage());
         }
     } else {
-        error_log("block_eventsengine_load_for_plugin({$plugin}): File not found: {$eventsenginefile}");
+        block_eventsengine_log("block_eventsengine_load_for_plugin({$plugin}): File not found: {$eventsenginefile}");
     }
     return false;
 }
@@ -263,11 +283,13 @@ function block_eventsengine_handler($event) {
     // Need an array to track events because another observed event could be triggered,
     // [indirectly] by this event handler, delaying/unsequencing the event order.
     static $previousevents = [];
-    // error_log("block_eventsengine_handler({$event->eventname}): INFO: Begin");
+    // block_eventsengine_log("block_eventsengine_handler({$event->eventname}): INFO: Begin");
     $encodedevent = @json_encode($event->get_data());
     if (in_array($encodedevent, $previousevents)) {
-        error_log("block_eventsengine_handler({$event->eventname}): Aborting multiple trigger. (stored ".count($previousevents).')');
-        // debugging("block_eventsengine_handler({$event->eventname}): Aborting multiple trigger. (stored ".count($previousevents).')', DEBUG_DEVELOPER);
+        if (debugging('', DEBUG_DEVELOPER)) {
+            block_eventsengine_log("block_eventsengine_handler({$event->eventname}):".
+                ' Aborting multiple trigger. (stored '.count($previousevents).')');
+        }
         return true; // Prevent multiple plugins triggering same callback (this).
     }
     $previousevents[] = $encodedevent;
@@ -277,10 +299,10 @@ function block_eventsengine_handler($event) {
         var_dump($previousevents);
         $tmp = ob_get_contents();
         ob_end_clean();
-        error_log("block_eventsengine_handler({$event->eventname}): INFO: previousevents[] = {$tmp}");
+        block_eventsengine_log("block_eventsengine_handler({$event->eventname}): INFO: previousevents[] = {$tmp}");
     }
     foreach ($assigns as $assign) {
-        // error_log("block_eventsengine_handler({$event->eventname}): INFO: assignid = {$assign->id}");
+        // block_eventsengine_log("block_eventsengine_handler({$event->eventname}): INFO: assignid = {$assign->id}");
         if ($assign->disabled) {
             continue;
         }
@@ -308,7 +330,8 @@ function block_eventsengine_handler($event) {
             $available = (empty($engine['available']) || $engine['available']()) && (empty($actiondef['available']) || $actiondef['available']());
         } catch (Exception $e) {
             $available = false;
-            error_log("block_eventsengine_handler({$event->eventname}): assign id = {$assign->id} - Exception in available(): ".$e->getMessage());
+            block_eventsengine_log("block_eventsengine_handler({$event->eventname}): assign id = {$assign->id}".
+                    ' - Exception in available(): '.$e->getMessage());
         }
         if ($available) {
             try {
@@ -318,12 +341,12 @@ function block_eventsengine_handler($event) {
                     $actiondef['trigger']($contextid, $actiondata, $event);
                 }
             } catch (Exception $e) {
-                error_log("block_eventsengine_handler({$event->eventname}): assign id = {$assign->id} -".
-                        " Exception in engine::ready() or action::trigger(): ".$e->getMessage());
+                block_eventsengine_log("block_eventsengine_handler({$event->eventname}): assign id = {$assign->id} -".
+                        ' Exception in engine::ready() or action::trigger(): '.$e->getMessage());
             }
         }
     }
-    // error_log("block_eventsengine_handler({$event->eventname}): INFO: Exit");
+    // block_eventsengine_log("block_eventsengine_handler({$event->eventname}): INFO: Exit");
     return true;
 }
 
