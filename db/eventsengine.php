@@ -376,8 +376,9 @@ $eventsengine = [
         'display' => function($enginedata) {
                          global $PAGE, $USER;
                          $pgcontext = $PAGE->context;
+                         $crsids = (array)$enginedata->courseid;
                          return ($pgcontext == context_system::instance() || $pgcontext == context_user::instance($USER->id) ||
-                                 $pgcontext == context_course::instance($enginedata->courseid));
+                                 ($pgcontext->contextlevel == CONTEXT_COURSE && in_array($pgcontext->instanceid, $crsids)));
                      },
         'ready' => function($event, $enginedata) {
                        global $DB;
