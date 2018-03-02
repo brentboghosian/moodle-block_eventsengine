@@ -1,12 +1,19 @@
 <?php
-/**
- * Definition of block_eventsengine
- *
- * @package   block_eventsengine
- * @category  event
- * @copyright 2017 onwards Brent Boghosian <brentboghosian@alumni.uwaterloo.ca>
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
+
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace block_eventsengine\form;
 
@@ -15,8 +22,20 @@ global $CFG;
 require_once($CFG->dirroot.'/lib/formslib.php');
 require_once($CFG->dirroot.'/blocks/eventsengine/lib.php');
 
+/**
+ * Definition of block_eventsengine dataform.
+ *
+ * @package   block_eventsengine
+ * @category  event
+ * @copyright 2017 onwards Brent Boghosian <brentboghosian@alumni.uwaterloo.ca>
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class dataform extends \moodleform {
-    function definition() {
+    /**
+     * The public form definition method.
+     *
+     */
+    public function definition() {
         global $DB;
         $mform =& $this->_form;
         $assign = new \stdClass;
@@ -46,7 +65,7 @@ class dataform extends \moodleform {
 
         $mform->addElement('text', 'name', get_string('name', 'block_eventsengine').':', ['size' => 40]);
         $mform->setType('name', PARAM_TEXT);
-        $mform->addRule('name', get_string('required'), 'required', NULL, 'client'); // TBD?
+        $mform->addRule('name', get_string('required'), 'required', null, 'client'); // TBD?
         $mform->addRule('name', null, 'maxlength', 255, 'client');
 
         $mform->addElement('header', 'title', get_string('editengineform', 'block_eventsengine'));
@@ -89,10 +108,10 @@ class dataform extends \moodleform {
     }
 
     /**
-     * Definition after data method to modify form based on form data
+     * Definition after data method to modify form based on form data.
      *
      */
-    function definition_after_data() {
+    public function definition_after_data() {
         $mform = &$this->_form;
 
         $mform->addElement('html', '<script type="text/javascript">

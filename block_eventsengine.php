@@ -1,4 +1,26 @@
 <?php
+
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+defined('MOODLE_INTERNAL') || die();
+
+require_once(__DIR__.'/lib.php');
+
+define('EE_WIDE_DISPLAY', false); // TBD.
+
 /**
  * Definition of block_eventsengine
  *
@@ -6,12 +28,6 @@
  * @category  event
  * @copyright 2017 onwards Brent Boghosian <brentboghosian@alumni.uwaterloo.ca>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
-require_once(__DIR__.'/lib.php');
-
-/**
- * EventsEngine block.
  */
 class block_eventsengine extends block_base {
     /** @var string The component identifier for this block. */
@@ -81,7 +97,7 @@ class block_eventsengine extends block_base {
     /**
      * Block init() method - required.
      */
-    function init() {
+    public function init() {
         $this->title = get_string('pluginname', 'block_eventsengine');
         $this->debug = get_config('block_eventsengine', 'debug');
     }
@@ -94,7 +110,6 @@ class block_eventsengine extends block_base {
     public function get_content() {
         global $CFG, $DB, $OUTPUT, $PAGE, $USER;
 
-        // $config = get_config('block_eventsengine');
         $this->content = new stdClass;
         $this->content->text = '';
 
@@ -127,8 +142,10 @@ class block_eventsengine extends block_base {
             // Tabulate listing.
             $table = new html_table();
             $table->head = [get_string('name', 'block_eventsengine'), '']; // TBD: Conserve width in block?
-            // $table->head[] = get_string('info');
-            // $table->head[] = get_string('actions');
+            if (EE_WIDE_DISPLAY) { // TBD: Alternative method.
+                $table->head[] = get_string('info');
+                $table->head[] = get_string('actions');
+            }
             $table->data = [];
             $i = 0;
             foreach ($todisplay as $item) {
@@ -151,9 +168,11 @@ class block_eventsengine extends block_base {
                     ob_end_clean();
                     $details .= "\nData:\n{$rawdata}";
                 }
-                // $table->data[$i][] = $details;
-                // In block so probably would be too wide ...
-                // $editbuttons = [];
+                if (EE_WIDE_DISPLAY) {
+                    $table->data[$i][] = $details;
+                    // In block so probably would be too wide.
+                    $editbuttons = [];
+                }
                 $editbuttons = [html_writer::img("{$CFG->wwwroot}/blocks/eventsengine/pix/details.png", '', ['title' => $details])];
                 if (is_siteadmin() || $USER->id == $item->owner) {
                     $editbuttons[] = html_writer::link(new moodle_url('/blocks/eventsengine/editengine.php',
@@ -197,24 +216,24 @@ class block_eventsengine extends block_base {
         $contextselector = html_writer::tag('label', get_string('selectcontext', 'block_eventsengine'),
                 ['for' => 'context']).html_writer::select($contextmenu, 'context', '',
                 ['0' => get_string('choose', 'block_eventsengine')], ['id' => 'id_context_selector',
-            'style' => $selectstyle]);
+                    'style' => $selectstyle]);
 
         $engineselector = html_writer::tag('label', get_string('selectengine', 'block_eventsengine'),
                 ['for' => 'engine']).html_writer::select([], 'engine', '',
                 ['0' => get_string('choose', 'block_eventsengine')], ['id' => 'id_engine_selector',
-            'style' => $selectstyle]);
+                    'style' => $selectstyle]);
 
         $actionselector = html_writer::tag('label', get_string('selectaction', 'block_eventsengine'),
                 ['for' => 'action']).html_writer::select([], 'action', '',
                 ['0' => get_string('choose', 'block_eventsengine')], ['id' => 'id_action_selector',
-            'style' => $selectstyle]);
+                    'style' => $selectstyle]);
         $submitbutton = html_writer::empty_tag('input', ['type' => 'submit', 'name' => 'create', 'value' => get_string('create')]);
         $returnurl = html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'returnurl', 'value' => $PAGE->url]);
         $this->content->text .= html_writer::tag('form', $returnurl.$brnl.$contextselector.$brnl.$engineselector.$brnl.
                 $actionselector.$brnl.$submitbutton, [
-            'id' => 'block_eventsengine_createform',
-            'method' => 'get',
-            'action' => new moodle_url('/blocks/eventsengine/editengine.php', ['returnurl' => $PAGE->url])]);
+                    'id' => 'block_eventsengine_createform',
+                    'method' => 'get',
+                    'action' => new moodle_url('/blocks/eventsengine/editengine.php', ['returnurl' => $PAGE->url])]);
 
         return $this->content;
     }
