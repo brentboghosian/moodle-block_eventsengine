@@ -23,7 +23,7 @@ YUI.add('moodle-block_eventsengine-engineactionselect', function(Y) {
      */
     var MODULEBASE = function() {
         MODULEBASE.superclass.constructor.apply(this, arguments);
-    }
+    };
 
     /**
      * @class M.block_eventsengine.engineactionselect
