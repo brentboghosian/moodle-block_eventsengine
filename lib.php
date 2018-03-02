@@ -1,4 +1,20 @@
 <?php
+
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Definition of core events engines & actions
  *
@@ -7,6 +23,8 @@
  * @copyright 2017 onwards Brent Boghosian <brentboghosian@alumni.uwaterloo.ca>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+defined('MOODLE_INTERNAL') || die();
 
 // File path of plugin's eventsengine definition file.
 define('BLOCK_EVENTSENGINE_FILE', '/db/eventsengine.php');
@@ -60,9 +78,9 @@ function block_eventsengine_float_comp($num1, $op, $num2, $nobcmath = false) {
         $result = bccomp($num1, $num2, $scale);
         return in_array($result, $validopsmap[$op], true);
     } else {
-        // Epsilon is the precision we use to determine if two floats are equal. If their difference is less that this amount,
-        // they are considered equal. We use $scale to generate a float that is one order of magnitude more precise that the
-        // max. precision of the two numbers.
+        // Epsilon is the precision we use to determine if two floats are equal. If their difference is less that this amount, ...
+        // They are considered equal. We use $scale to generate a float that is one order of magnitude more precise that the ...
+        // Max. precision of the two numbers.
         $epsilon = (float)('0.'.str_repeat(0, $scale).'1');
 
         // Convert $num1 to desired precision.
@@ -123,7 +141,7 @@ function block_eventsengine_float_comp($num1, $op, $num2, $nobcmath = false) {
  * Substitute string variables.
  *
  * @param string $in The input string.
- * @param array|object The variables and values.
+ * @param array|object $a The variables and values.
  * @return string The result string.
  */
 function block_eventsengine_sub_str_vars($in, $a) {
@@ -172,9 +190,9 @@ function block_eventsengine_log($msg) {
 /**
  * Registers a plugin contains events handlers for a specific type of event.
  *
- * @param string $plugin
- * @param array &$eventsengine the returned eventsengine array.
- * @param array &$eventsactions the returned eventsactions array.
+ * @param string $plugin The plugin.
+ * @param array &$evtsengine the returned eventsengine array.
+ * @param array &$evtsactions the returned eventsactions array.
  * @return bool true on success, false on not found or error.
  */
 function block_eventsengine_load_for_plugin($plugin, &$evtsengine, &$evtsactions) {
@@ -216,8 +234,8 @@ function block_eventsengine_register($plugin) {
             foreach ($engines as $enginekey => $engine) {
                 $DB->insert_record('block_eventsengine_events', (object)['plugin' => $plugin, 'event' => $event,
                     'engine' => $enginekey, 'context' => $engine['context']]);
-                // Note: Developer MUST manually ensure all required events are observed to call
-                // blocks/eventsengine/lib.php::block_eventsengine_handler in plugin's db/events.php
+                // Note: Developer MUST manually ensure all required events are observed to call ...
+                // Function blocks/eventsengine/lib.php::block_eventsengine_handler in plugin's db/events.php .
             }
         }
     }
@@ -250,7 +268,7 @@ function block_eventsengine_get_engine_def($pluginengine, $event) {
  * @return object The eventsengine action def
  */
 function block_eventsengine_get_action_def($pluginaction) {
-    // ToDO: add caching.
+    // ToDo: add caching.
     $pluginacts = explode(':', $pluginaction, 2);
     $eventsengine = [];
     $eventsactions = [];
@@ -280,10 +298,9 @@ function block_eventsengine_get_name($engineoraction) {
  */
 function block_eventsengine_handler($event) {
     global $DB;
-    // Need an array to track events because another observed event could be triggered,
-    // [indirectly] by this event handler, delaying/unsequencing the event order.
+    // Need an array to track events because another observed event could be triggered, ...
+    // Indirectly by this event handler, delaying/unsequencing the event order.
     static $previousevents = [];
-    // block_eventsengine_log("block_eventsengine_handler({$event->eventname}): INFO: Begin");
     $encodedevent = @json_encode($event->get_data());
     if (in_array($encodedevent, $previousevents)) {
         if (debugging('', DEBUG_DEVELOPER)) {
@@ -302,7 +319,6 @@ function block_eventsengine_handler($event) {
         block_eventsengine_log("block_eventsengine_handler({$event->eventname}): INFO: previousevents[] = {$tmp}");
     }
     foreach ($assigns as $assign) {
-        // block_eventsengine_log("block_eventsengine_handler({$event->eventname}): INFO: assignid = {$assign->id}");
         if ($assign->disabled) {
             continue;
         }
@@ -346,7 +362,6 @@ function block_eventsengine_handler($event) {
             }
         }
     }
-    // block_eventsengine_log("block_eventsengine_handler({$event->eventname}): INFO: Exit");
     return true;
 }
 
